@@ -57,11 +57,16 @@ def apply_script(protocol, connection, config):
         def __init__(self, *arg, **kw):
             protocol.__init__(self, *arg, **kw)
             def call():
-                if savemap_config.option('save_at_shutdown', False).get():
+                at_shutdown = savemap_config.option('save_at_shutdown', False).get()
+                always = savemap_config.option('always_save_map', False).get()
+                if at_shutdown or always:
                     self.save_map()
             reactor.addSystemEventTrigger('before', 'shutdown', call)
 
         async def set_map_name(self, rot_info: RotationInfo) -> None:
+            if savemap_config.option('always_save_map', False).get():
+                if self.map is not None:
+                    self.save_map()
             if savemap_config.option('load_saved_map', False).get():
                 if os.path.isfile(get_path(rot_info.name)):
                     log.info("Saved version of '%s' found" % rot_info.name)
